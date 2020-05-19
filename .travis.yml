@@ -1,0 +1,22 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t freddukker/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  -  docker run -e CI=true freddukker/react-test npm test
+
+after_success:
+  - docker build -t freddukker/multi-client ./client
+  - docker build -t freddukker/multi-nginx ./nginx
+  - docker build -t freddukker/multi-server ./server
+  - docker build -t freddukker/multi-worker ./worker
+  # login into the Docker cli
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # Takes those images and push them to docker hub
+  - docker push freddukker/multi-client
+  - docker push freddukker/multi-nginx
+  - docker push freddukker/multi-server
+  - docker push freddukker/multi-worker
